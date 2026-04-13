@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: akamane
+    name: aps-navi
     runtime: python
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn app:app
