@@ -17,14 +17,28 @@ def init_db():
     conn.execute("""
         CREATE TABLE IF NOT EXISTS companies (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            -- 基本情報
             company_name TEXT NOT NULL,
             industry TEXT,
             employees TEXT,
             revenue TEXT,
             hp_url TEXT,
             sales_person TEXT,
+            -- 会社概要詳細（AI自動取得）
+            company_detail TEXT,
             overview TEXT,
             mid_term_plan TEXT,
+            mvv TEXT,
+            president_profile TEXT,
+            ir_info TEXT,
+            investment_areas TEXT,
+            -- 業界分析（AI自動生成）
+            pest TEXT,
+            five_forces TEXT,
+            swot TEXT,
+            cross_swot TEXT,
+            positioning TEXT,
+            -- 営業調査項目（手入力）
             systems TEXT DEFAULT '[]',
             key_persons TEXT DEFAULT '[]',
             competitors TEXT,
@@ -32,10 +46,43 @@ def init_db():
             latent_needs TEXT,
             big_play TEXT,
             pipeline TEXT,
+            -- APSアカウントプラン（手入力）
+            activity_history TEXT,
+            mid_long_term_plan TEXT,
+            org_chart TEXT,
+            forecast TEXT,
+            key_cases TEXT,
+            action_plan TEXT,
+            company_requests TEXT,
+            -- メタ
             created_at TEXT,
             updated_at TEXT
         )
     """)
+    # 既存テーブルへのカラム追加（マイグレーション）
+    existing = [row[1] for row in conn.execute("PRAGMA table_info(companies)").fetchall()]
+    new_columns = [
+        ("company_detail", "TEXT"),
+        ("mvv", "TEXT"),
+        ("president_profile", "TEXT"),
+        ("ir_info", "TEXT"),
+        ("investment_areas", "TEXT"),
+        ("pest", "TEXT"),
+        ("five_forces", "TEXT"),
+        ("swot", "TEXT"),
+        ("cross_swot", "TEXT"),
+        ("positioning", "TEXT"),
+        ("activity_history", "TEXT"),
+        ("mid_long_term_plan", "TEXT"),
+        ("org_chart", "TEXT"),
+        ("forecast", "TEXT"),
+        ("key_cases", "TEXT"),
+        ("action_plan", "TEXT"),
+        ("company_requests", "TEXT"),
+    ]
+    for col, col_type in new_columns:
+        if col not in existing:
+            conn.execute(f"ALTER TABLE companies ADD COLUMN {col} {col_type}")
     conn.commit()
     conn.close()
 
@@ -69,10 +116,15 @@ def create_company(data):
     cur = conn.execute("""
         INSERT INTO companies (
             company_name, industry, employees, revenue, hp_url, sales_person,
-            overview, mid_term_plan, systems, key_persons,
+            company_detail, overview, mid_term_plan, mvv, president_profile,
+            ir_info, investment_areas,
+            pest, five_forces, swot, cross_swot, positioning,
+            systems, key_persons,
             competitors, end_user_issues, latent_needs, big_play, pipeline,
+            activity_history, mid_long_term_plan, org_chart, forecast,
+            key_cases, action_plan, company_requests,
             created_at, updated_at
-        ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+        ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
     """, (
         data.get("company_name", ""),
         data.get("industry", ""),
@@ -80,8 +132,18 @@ def create_company(data):
         data.get("revenue", ""),
         data.get("hp_url", ""),
         data.get("sales_person", ""),
+        data.get("company_detail", ""),
         data.get("overview", ""),
         data.get("mid_term_plan", ""),
+        data.get("mvv", ""),
+        data.get("president_profile", ""),
+        data.get("ir_info", ""),
+        data.get("investment_areas", ""),
+        data.get("pest", ""),
+        data.get("five_forces", ""),
+        data.get("swot", ""),
+        data.get("cross_swot", ""),
+        data.get("positioning", ""),
         json.dumps(data.get("systems", []), ensure_ascii=False),
         json.dumps(data.get("key_persons", []), ensure_ascii=False),
         data.get("competitors", ""),
@@ -89,6 +151,13 @@ def create_company(data):
         data.get("latent_needs", ""),
         data.get("big_play", ""),
         data.get("pipeline", ""),
+        data.get("activity_history", ""),
+        data.get("mid_long_term_plan", ""),
+        data.get("org_chart", ""),
+        data.get("forecast", ""),
+        data.get("key_cases", ""),
+        data.get("action_plan", ""),
+        data.get("company_requests", ""),
         now, now
     ))
     conn.commit()
@@ -103,8 +172,13 @@ def update_company(company_id, data):
     conn.execute("""
         UPDATE companies SET
             company_name=?, industry=?, employees=?, revenue=?, hp_url=?, sales_person=?,
-            overview=?, mid_term_plan=?, systems=?, key_persons=?,
+            company_detail=?, overview=?, mid_term_plan=?, mvv=?, president_profile=?,
+            ir_info=?, investment_areas=?,
+            pest=?, five_forces=?, swot=?, cross_swot=?, positioning=?,
+            systems=?, key_persons=?,
             competitors=?, end_user_issues=?, latent_needs=?, big_play=?, pipeline=?,
+            activity_history=?, mid_long_term_plan=?, org_chart=?, forecast=?,
+            key_cases=?, action_plan=?, company_requests=?,
             updated_at=?
         WHERE id=?
     """, (
@@ -114,8 +188,18 @@ def update_company(company_id, data):
         data.get("revenue", ""),
         data.get("hp_url", ""),
         data.get("sales_person", ""),
+        data.get("company_detail", ""),
         data.get("overview", ""),
         data.get("mid_term_plan", ""),
+        data.get("mvv", ""),
+        data.get("president_profile", ""),
+        data.get("ir_info", ""),
+        data.get("investment_areas", ""),
+        data.get("pest", ""),
+        data.get("five_forces", ""),
+        data.get("swot", ""),
+        data.get("cross_swot", ""),
+        data.get("positioning", ""),
         json.dumps(data.get("systems", []), ensure_ascii=False),
         json.dumps(data.get("key_persons", []), ensure_ascii=False),
         data.get("competitors", ""),
@@ -123,6 +207,13 @@ def update_company(company_id, data):
         data.get("latent_needs", ""),
         data.get("big_play", ""),
         data.get("pipeline", ""),
+        data.get("activity_history", ""),
+        data.get("mid_long_term_plan", ""),
+        data.get("org_chart", ""),
+        data.get("forecast", ""),
+        data.get("key_cases", ""),
+        data.get("action_plan", ""),
+        data.get("company_requests", ""),
         now,
         company_id
     ))

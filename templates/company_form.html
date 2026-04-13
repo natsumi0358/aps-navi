@@ -5,7 +5,7 @@
 {% block extra_style %}
 <style>
   .form-container {
-    max-width: 800px;
+    max-width: 860px;
     margin: 0 auto;
     padding: 24px 16px 60px;
   }
@@ -25,7 +25,22 @@
     margin-bottom: 18px;
     padding-bottom: 10px;
     border-bottom: 2px solid #1a1a2e;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
   }
+
+  .section-badge {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 4px;
+    margin-left: auto;
+  }
+
+  .badge-auto { background: #e8f4fd; color: #1a73e8; }
+  .badge-manual { background: #fef3e2; color: #e67e22; }
 
   .form-group {
     margin-bottom: 16px;
@@ -44,6 +59,16 @@
     margin-left: 4px;
   }
 
+  label .auto-tag {
+    font-size: 11px;
+    font-weight: 500;
+    color: #1a73e8;
+    background: #e8f4fd;
+    padding: 2px 6px;
+    border-radius: 3px;
+    margin-left: 6px;
+  }
+
   input[type="text"],
   input[type="url"],
   textarea,
@@ -58,6 +83,7 @@
     background: white;
     outline: none;
     transition: border-color 0.15s;
+    box-sizing: border-box;
   }
 
   input[type="text"]:focus,
@@ -78,6 +104,61 @@
     grid-template-columns: 1fr 1fr;
     gap: 12px;
   }
+
+  .url-row {
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+  }
+
+  .url-row input {
+    flex: 1;
+  }
+
+  .btn-auto-fetch {
+    background: #1a73e8;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    flex-shrink: 0;
+    height: 42px;
+  }
+
+  .btn-auto-fetch:hover { background: #1558b0; }
+  .btn-auto-fetch:disabled { background: #aaa; cursor: not-allowed; }
+
+  .btn-generate {
+    background: #e94560;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 12px 20px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .btn-generate:hover { background: #c73652; }
+  .btn-generate:disabled { background: #aaa; cursor: not-allowed; }
+
+  .fetch-status {
+    font-size: 12px;
+    color: #888;
+    margin-top: 6px;
+    min-height: 18px;
+  }
+
+  .fetch-status.success { color: #2e7d32; }
+  .fetch-status.error { color: #c62828; }
 
   /* 動的行テーブル */
   .dynamic-table {
@@ -178,9 +259,22 @@
 
   .btn-cancel:hover { border-color: #999; color: #333; }
 
+  .analysis-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .analysis-grid .full-width {
+    grid-column: 1 / -1;
+  }
+
   @media (max-width: 600px) {
     .form-row { grid-template-columns: 1fr; }
+    .analysis-grid { grid-template-columns: 1fr; }
     .dynamic-table { font-size: 12px; }
+    .url-row { flex-direction: column; }
+    .btn-auto-fetch { width: 100%; height: auto; }
   }
 </style>
 {% endblock %}
@@ -191,71 +285,137 @@
 
 {% block content %}
 <div class="form-container">
-  <form method="post">
+  <form method="post" id="main-form">
 
-    <!-- 基本情報 -->
+    <!-- ① 基本情報 -->
     <div class="form-section">
-      <h2>基本情報</h2>
+      <h2>① 基本情報</h2>
       <div class="form-group">
         <label>会社名<span class="required">*</span></label>
-        <input type="text" name="company_name" required
+        <input type="text" name="company_name" id="company_name" required
                value="{{ company.company_name if company else '' }}"
                placeholder="例：株式会社サンプル">
       </div>
       <div class="form-row">
         <div class="form-group">
-          <label>業種</label>
-          <input type="text" name="industry"
+          <label>業種 <span class="auto-tag">AI自動取得</span></label>
+          <input type="text" name="industry" id="industry"
                  value="{{ company.industry if company else '' }}"
                  placeholder="例：製造業、IT・SIer">
         </div>
         <div class="form-group">
-          <label>従業員数</label>
-          <input type="text" name="employees"
+          <label>従業員数 <span class="auto-tag">AI自動取得</span></label>
+          <input type="text" name="employees" id="employees"
                  value="{{ company.employees if company else '' }}"
                  placeholder="例：500名">
         </div>
       </div>
       <div class="form-row">
         <div class="form-group">
-          <label>売上規模（概算）</label>
-          <input type="text" name="revenue"
+          <label>売上規模（概算） <span class="auto-tag">AI自動取得</span></label>
+          <input type="text" name="revenue" id="revenue"
                  value="{{ company.revenue if company else '' }}"
                  placeholder="例：200億円">
         </div>
         <div class="form-group">
           <label>担当営業名</label>
-          <input type="text" name="sales_person"
+          <input type="text" name="sales_person" id="sales_person"
                  value="{{ company.sales_person if company else '' }}"
                  placeholder="例：田中 一郎">
         </div>
       </div>
       <div class="form-group">
         <label>会社HP URL</label>
-        <input type="url" name="hp_url"
-               value="{{ company.hp_url if company else '' }}"
-               placeholder="https://example.com">
+        <div class="url-row">
+          <input type="url" name="hp_url" id="hp_url"
+                 value="{{ company.hp_url if company else '' }}"
+                 placeholder="https://example.com">
+          <button type="button" class="btn-auto-fetch" id="fetch-btn" onclick="fetchFromUrl()">
+            🔍 HPから自動取得
+          </button>
+        </div>
+        <div class="fetch-status" id="fetch-status"></div>
       </div>
     </div>
 
-    <!-- 会社概要・方針 -->
+    <!-- ② 会社概要・方針（AI自動取得） -->
     <div class="form-section">
-      <h2>APS調査項目</h2>
+      <h2>② 会社概要・方針 <span class="section-badge badge-auto">AI自動取得</span></h2>
       <div class="form-group">
-        <label>会社概要・事業内容</label>
-        <textarea name="overview" rows="4"
-                  placeholder="HPや決算説明資料をもとに、主要事業・売上構成・強みなどを記載">{{ company.overview if company else '' }}</textarea>
+        <label>会社概要・事業内容 <span class="auto-tag">AI自動取得</span></label>
+        <textarea name="overview" id="overview" rows="5"
+                  placeholder="「HPから自動取得」ボタンで自動入力、または手動で入力">{{ company.overview if company else '' }}</textarea>
+      </div>
+      <div class="form-group">
+        <label>MVV（ミッション・ビジョン・バリュー） <span class="auto-tag">AI自動取得</span></label>
+        <textarea name="mvv" id="mvv" rows="4"
+                  placeholder="「HPから自動取得」ボタンで自動入力">{{ company.mvv if company else '' }}</textarea>
+      </div>
+      <div class="form-group">
+        <label>代表者プロフィール <span class="auto-tag">AI自動取得</span></label>
+        <textarea name="president_profile" id="president_profile" rows="3"
+                  placeholder="「HPから自動取得」ボタンで自動入力">{{ company.president_profile if company else '' }}</textarea>
       </div>
       <div class="form-group">
         <label>中期経営計画・会社の方針</label>
-        <textarea name="mid_term_plan" rows="4"
+        <textarea name="mid_term_plan" id="mid_term_plan" rows="4"
                   placeholder="IR資料や中計から読み取った方針・注力領域・KPIなど">{{ company.mid_term_plan if company else '' }}</textarea>
+      </div>
+      <div class="form-group">
+        <label>IR情報・投資家向け情報</label>
+        <textarea name="ir_info" id="ir_info" rows="3"
+                  placeholder="決算情報・業績推移・投資家向けメッセージなど">{{ company.ir_info if company else '' }}</textarea>
       </div>
     </div>
 
-    <!-- キーパーソン -->
+    <!-- ③ 業界分析（AI自動生成） -->
     <div class="form-section">
-      <h2>キーパーソン一覧</h2>
+      <h2>③ 業界分析 <span class="section-badge badge-auto">AI自動生成</span></h2>
+      {% if mode == 'edit' and company %}
+      <button type="button" class="btn-generate" id="generate-btn" onclick="generateAnalysis()">
+        🧠 業界分析を自動生成（PEST / 5Forces / SWOT）
+      </button>
+      <div class="fetch-status" id="generate-status"></div>
+      {% else %}
+      <p style="font-size:13px; color:#888; margin-bottom:16px;">※ 会社を保存後に自動生成できます。</p>
+      {% endif %}
+      <div class="analysis-grid">
+        <div class="form-group">
+          <label>PEST分析 <span class="auto-tag">AI自動生成</span></label>
+          <textarea name="pest" id="pest" rows="5"
+                    placeholder="AI自動生成または手動入力">{{ company.pest if company else '' }}</textarea>
+        </div>
+        <div class="form-group">
+          <label>5Forces分析 <span class="auto-tag">AI自動生成</span></label>
+          <textarea name="five_forces" id="five_forces" rows="5"
+                    placeholder="AI自動生成または手動入力">{{ company.five_forces if company else '' }}</textarea>
+        </div>
+        <div class="form-group">
+          <label>SWOT分析 <span class="auto-tag">AI自動生成</span></label>
+          <textarea name="swot" id="swot" rows="5"
+                    placeholder="AI自動生成または手動入力">{{ company.swot if company else '' }}</textarea>
+        </div>
+        <div class="form-group">
+          <label>クロスSWOT分析 <span class="auto-tag">AI自動生成</span></label>
+          <textarea name="cross_swot" id="cross_swot" rows="5"
+                    placeholder="AI自動生成または手動入力">{{ company.cross_swot if company else '' }}</textarea>
+        </div>
+        <div class="form-group full-width">
+          <label>ポジショニング・差別化分析 <span class="auto-tag">AI自動生成</span></label>
+          <textarea name="positioning" id="positioning" rows="4"
+                    placeholder="AI自動生成または手動入力">{{ company.positioning if company else '' }}</textarea>
+        </div>
+        <div class="form-group full-width">
+          <label>投資エリア・想定ソリューション <span class="auto-tag">AI自動生成</span></label>
+          <textarea name="investment_areas" id="investment_areas" rows="4"
+                    placeholder="AI自動生成または手動入力">{{ company.investment_areas if company else '' }}</textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- ④ キーパーソン -->
+    <div class="form-section">
+      <h2>④ キーパーソン一覧 <span class="section-badge badge-manual">手入力</span></h2>
       <table class="dynamic-table" id="persons-table">
         <thead>
           <tr>
@@ -303,9 +463,9 @@
       <button type="button" class="add-row-btn" onclick="addPersonRow()">＋ キーパーソンを追加</button>
     </div>
 
-    <!-- システム一覧 -->
+    <!-- ⑤ システム一覧 -->
     <div class="form-section">
-      <h2>現在使っているシステム一覧</h2>
+      <h2>⑤ 現在使っているシステム一覧 <span class="section-badge badge-manual">手入力</span></h2>
       <table class="dynamic-table" id="systems-table">
         <thead>
           <tr>
@@ -353,9 +513,9 @@
       <button type="button" class="add-row-btn" onclick="addSystemRow()">＋ システムを追加</button>
     </div>
 
-    <!-- 営業分析情報 -->
+    <!-- ⑥ 営業分析情報 -->
     <div class="form-section">
-      <h2>営業分析情報</h2>
+      <h2>⑥ 営業調査 <span class="section-badge badge-manual">手入力</span></h2>
       <div class="form-group">
         <label>競合状況</label>
         <textarea name="competitors" rows="3"
@@ -383,6 +543,46 @@
       </div>
     </div>
 
+    <!-- ⑦ APSアカウントプラン（手入力） -->
+    <div class="form-section">
+      <h2>⑦ APSアカウントプラン <span class="section-badge badge-manual">手入力</span></h2>
+      <div class="form-group">
+        <label>活動履歴・商談サマリー</label>
+        <textarea name="activity_history" rows="5"
+                  placeholder="直近の商談記録・面談日・主要な合意事項・次のアクションなど">{{ company.activity_history if company else '' }}</textarea>
+      </div>
+      <div class="form-group">
+        <label>中長期プラン（3〜5年ビジョン）</label>
+        <textarea name="mid_long_term_plan" rows="4"
+                  placeholder="アカウント全体での中長期的な受注目標・戦略仮説・拡大シナリオ">{{ company.mid_long_term_plan if company else '' }}</textarea>
+      </div>
+      <div class="form-group">
+        <label>組織図・関係者マップ</label>
+        <textarea name="org_chart" rows="4"
+                  placeholder="主要な部門・担当者・意思決定ルートをテキストで記載（例：情シス部長→CIO→役員会で承認）">{{ company.org_chart if company else '' }}</textarea>
+      </div>
+      <div class="form-group">
+        <label>Forecast（今期受注見込み）</label>
+        <textarea name="forecast" rows="3"
+                  placeholder="今期フォーキャスト金額・確度・案件名・クローズ予定時期">{{ company.forecast if company else '' }}</textarea>
+      </div>
+      <div class="form-group">
+        <label>主要案件・Key Cases</label>
+        <textarea name="key_cases" rows="4"
+                  placeholder="現在進行中・今後狙う主要案件の詳細（案件名・規模・競合・確度など）">{{ company.key_cases if company else '' }}</textarea>
+      </div>
+      <div class="form-group">
+        <label>アクションプラン（直近90日）</label>
+        <textarea name="action_plan" rows="4"
+                  placeholder="具体的なネクストアクション・訪問計画・提案スケジュール・関与すべき人物など">{{ company.action_plan if company else '' }}</textarea>
+      </div>
+      <div class="form-group">
+        <label>お客様からのリクエスト・懸案事項</label>
+        <textarea name="company_requests" rows="3"
+                  placeholder="顧客から要望・懸念・リスクとして挙げられているポイント">{{ company.company_requests if company else '' }}</textarea>
+      </div>
+    </div>
+
     <div class="form-footer">
       <a href="{{ '/company/' + company.id|string + '/advisor' if company else '/' }}" class="btn-cancel">キャンセル</a>
       <button type="submit" class="btn-submit">
@@ -393,13 +593,115 @@
 </div>
 
 <script>
+const companyId = {% if company %}{{ company.id }}{% else %}null{% endif %};
+
+// ──────────────────────────────────────────
+// HPから自動取得
+// ──────────────────────────────────────────
+async function fetchFromUrl() {
+  const url = document.getElementById('hp_url').value.trim();
+  if (!url) {
+    setStatus('fetch-status', 'URLを入力してください', 'error');
+    return;
+  }
+
+  const btn = document.getElementById('fetch-btn');
+  btn.disabled = true;
+  btn.textContent = '取得中...';
+  setStatus('fetch-status', 'HPを読み込んでAIが解析中です。30秒ほどかかります...', '');
+
+  try {
+    const res = await fetch('/api/fetch_url', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url }),
+    });
+    const data = await res.json();
+
+    if (data.error) {
+      setStatus('fetch-status', `エラー: ${data.error}`, 'error');
+    } else {
+      const d = data.data;
+      fillIfEmpty('company_name', d.company_name);
+      fillIfEmpty('industry', d.industry);
+      fillIfEmpty('employees', d.employees);
+      fillIfEmpty('revenue', d.revenue);
+      fillIfEmpty('overview', d.overview);
+      fillIfEmpty('mvv', d.mvv);
+      fillIfEmpty('president_profile', d.president_profile);
+      fillIfEmpty('mid_term_plan', d.mid_term_plan);
+      setStatus('fetch-status', '✓ 自動入力しました。内容を確認・修正してください。', 'success');
+    }
+  } catch (err) {
+    setStatus('fetch-status', 'ネットワークエラーが発生しました', 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '🔍 HPから自動取得';
+  }
+}
+
+function fillIfEmpty(id, value) {
+  if (!value) return;
+  const el = document.getElementById(id);
+  if (el && !el.value.trim()) {
+    el.value = value;
+  }
+}
+
+// ──────────────────────────────────────────
+// 業界分析を自動生成
+// ──────────────────────────────────────────
+async function generateAnalysis() {
+  if (!companyId) return;
+
+  const btn = document.getElementById('generate-btn');
+  btn.disabled = true;
+  btn.innerHTML = '⏳ 分析生成中...（1〜2分かかります）';
+  setStatus('generate-status', 'PEST・5Forces・SWOT・クロスSWOT・ポジショニングを生成中です...', '');
+
+  try {
+    const res = await fetch(`/company/${companyId}/generate_analysis`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    const data = await res.json();
+
+    if (data.error) {
+      setStatus('generate-status', `エラー: ${data.error}`, 'error');
+    } else {
+      const d = data.data;
+      if (d.pest) document.getElementById('pest').value = d.pest;
+      if (d.five_forces) document.getElementById('five_forces').value = d.five_forces;
+      if (d.swot) document.getElementById('swot').value = d.swot;
+      if (d.cross_swot) document.getElementById('cross_swot').value = d.cross_swot;
+      if (d.positioning) document.getElementById('positioning').value = d.positioning;
+      if (d.investment_areas) document.getElementById('investment_areas').value = d.investment_areas;
+      setStatus('generate-status', '✓ 業界分析が完成しました。内容を確認してください。', 'success');
+    }
+  } catch (err) {
+    setStatus('generate-status', 'ネットワークエラーが発生しました', 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '🧠 業界分析を自動生成（PEST / 5Forces / SWOT）';
+  }
+}
+
+// ──────────────────────────────────────────
+// ユーティリティ
+// ──────────────────────────────────────────
+function setStatus(id, msg, type) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = msg;
+  el.className = 'fetch-status' + (type ? ' ' + type : '');
+}
+
 function removeRow(btn) {
   const row = btn.closest('tr');
   const tbody = row.parentNode;
   if (tbody.rows.length > 1) {
     row.remove();
   } else {
-    // 最後の1行は消さずにクリア
     row.querySelectorAll('input').forEach(inp => inp.value = '');
   }
 }
