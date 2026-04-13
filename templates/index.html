@@ -1,0 +1,194 @@
+{% extends "base.html" %}
+
+{% block title %}会社一覧｜アカマネ{% endblock %}
+
+{% block extra_style %}
+<style>
+  .page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+  }
+
+  .page-header h2 {
+    font-size: 20px;
+    color: #1a1a2e;
+  }
+
+  .company-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+  }
+
+  .company-card {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    transition: transform 0.15s, box-shadow 0.15s;
+    border: 2px solid transparent;
+  }
+
+  .company-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+    border-color: #1a1a2e;
+  }
+
+  .company-card h3 {
+    font-size: 17px;
+    font-weight: 700;
+    color: #1a1a2e;
+    margin-bottom: 8px;
+    line-height: 1.4;
+  }
+
+  .company-meta {
+    font-size: 13px;
+    color: #888;
+    margin-bottom: 4px;
+  }
+
+  .company-meta span {
+    margin-right: 12px;
+  }
+
+  .industry-badge {
+    display: inline-block;
+    background: #f0f0f0;
+    color: #555;
+    font-size: 12px;
+    padding: 3px 10px;
+    border-radius: 12px;
+    margin-bottom: 10px;
+  }
+
+  .card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px solid #f0f0f0;
+  }
+
+  .updated-at {
+    font-size: 12px;
+    color: #aaa;
+  }
+
+  .card-actions {
+    display: flex;
+    gap: 6px;
+  }
+
+  .card-action-btn {
+    font-size: 12px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    text-decoration: none;
+    border: 1px solid #ddd;
+    color: #555;
+    background: white;
+    cursor: pointer;
+  }
+
+  .card-action-btn:hover {
+    background: #f5f5f5;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 80px 20px;
+    color: #aaa;
+  }
+
+  .empty-state h3 {
+    font-size: 18px;
+    margin-bottom: 12px;
+    color: #888;
+  }
+
+  .empty-state p {
+    font-size: 14px;
+    line-height: 1.7;
+    margin-bottom: 24px;
+  }
+
+  .add-btn {
+    background: #e94560;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 10px;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .add-btn:hover { background: #c73652; }
+
+  @media (max-width: 600px) {
+    .company-grid { grid-template-columns: 1fr; }
+  }
+</style>
+{% endblock %}
+
+{% block header_action %}
+<a href="/company/new" class="btn btn-primary">＋ 新しい会社を追加</a>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="page-header">
+    <h2>会社一覧（{{ companies|length }}件）</h2>
+  </div>
+
+  {% if companies %}
+  <div class="company-grid">
+    {% for c in companies %}
+    <div class="company-card-wrap">
+      <a href="/company/{{ c.id }}/advisor" class="company-card">
+        <h3>{{ c.company_name }}</h3>
+        {% if c.industry %}
+        <div class="industry-badge">{{ c.industry }}</div>
+        {% endif %}
+        <div class="company-meta">
+          {% if c.employees %}<span>従業員：{{ c.employees }}</span>{% endif %}
+          {% if c.sales_person %}<span>担当：{{ c.sales_person }}</span>{% endif %}
+        </div>
+        {% if c.overview %}
+        <div style="font-size:13px; color:#666; line-height:1.5; margin-top:8px;">
+          {{ c.overview[:60] }}{% if c.overview|length > 60 %}…{% endif %}
+        </div>
+        {% endif %}
+        <div class="card-footer">
+          <span class="updated-at">更新：{{ c.updated_at[:10] if c.updated_at else '—' }}</span>
+          <div class="card-actions" onclick="event.preventDefault()">
+            <a href="/company/{{ c.id }}/edit" class="card-action-btn">編集</a>
+            <form action="/company/{{ c.id }}/delete" method="post"
+                  onsubmit="return confirm('{{ c.company_name }} を削除しますか？')">
+              <button type="submit" class="card-action-btn" style="color:#e94560; border-color:#e94560;">削除</button>
+            </form>
+          </div>
+        </div>
+      </a>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <h3>まだ会社情報がありません</h3>
+    <p>初回商談前に会社を調査して<br>AIからアドバイスをもらいましょう。</p>
+    <a href="/company/new" class="add-btn">＋ 最初の会社を追加する</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

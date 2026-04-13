@@ -1,0 +1,447 @@
+{% extends "base.html" %}
+
+{% block title %}{% if mode == 'new' %}会社を追加{% else %}{{ company.company_name }} を編集{% endif %}｜アカマネ{% endblock %}
+
+{% block extra_style %}
+<style>
+  .form-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 24px 16px 60px;
+  }
+
+  .form-section {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  }
+
+  .form-section h2 {
+    font-size: 15px;
+    font-weight: 700;
+    color: #1a1a2e;
+    margin-bottom: 18px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #1a1a2e;
+  }
+
+  .form-group {
+    margin-bottom: 16px;
+  }
+
+  label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: #555;
+    margin-bottom: 6px;
+  }
+
+  label .required {
+    color: #e94560;
+    margin-left: 4px;
+  }
+
+  input[type="text"],
+  input[type="url"],
+  textarea,
+  select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: inherit;
+    color: #333;
+    background: white;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  input[type="text"]:focus,
+  input[type="url"]:focus,
+  textarea:focus,
+  select:focus {
+    border-color: #1a1a2e;
+  }
+
+  textarea {
+    resize: vertical;
+    min-height: 80px;
+    line-height: 1.6;
+  }
+
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  /* 動的行テーブル */
+  .dynamic-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    margin-bottom: 10px;
+  }
+
+  .dynamic-table th {
+    background: #f5f5f5;
+    color: #555;
+    font-weight: 600;
+    padding: 8px 10px;
+    text-align: left;
+    border: 1px solid #e0e0e0;
+  }
+
+  .dynamic-table td {
+    padding: 6px 6px;
+    border: 1px solid #e0e0e0;
+    vertical-align: middle;
+  }
+
+  .dynamic-table input,
+  .dynamic-table select {
+    padding: 6px 8px;
+    font-size: 13px;
+    border: none;
+    background: transparent;
+    width: 100%;
+  }
+
+  .dynamic-table input:focus,
+  .dynamic-table select:focus {
+    background: #f9f9f9;
+    border-radius: 4px;
+    outline: 1px solid #1a1a2e;
+  }
+
+  .remove-row-btn {
+    background: none;
+    border: none;
+    color: #ccc;
+    cursor: pointer;
+    font-size: 16px;
+    padding: 4px 8px;
+    line-height: 1;
+  }
+
+  .remove-row-btn:hover { color: #e94560; }
+
+  .add-row-btn {
+    background: none;
+    border: 1px dashed #aaa;
+    color: #888;
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    cursor: pointer;
+    width: 100%;
+    margin-top: 4px;
+  }
+
+  .add-row-btn:hover { border-color: #1a1a2e; color: #1a1a2e; }
+
+  .form-footer {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    margin-top: 24px;
+  }
+
+  .btn-submit {
+    background: #1a1a2e;
+    color: white;
+    padding: 12px 28px;
+    border: none;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .btn-submit:hover { background: #2d2d5e; }
+
+  .btn-cancel {
+    background: none;
+    border: 1px solid #ccc;
+    color: #888;
+    padding: 12px 24px;
+    border-radius: 10px;
+    font-size: 15px;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+  }
+
+  .btn-cancel:hover { border-color: #999; color: #333; }
+
+  @media (max-width: 600px) {
+    .form-row { grid-template-columns: 1fr; }
+    .dynamic-table { font-size: 12px; }
+  }
+</style>
+{% endblock %}
+
+{% block header_action %}
+<a href="/" class="btn btn-secondary">← 一覧に戻る</a>
+{% endblock %}
+
+{% block content %}
+<div class="form-container">
+  <form method="post">
+
+    <!-- 基本情報 -->
+    <div class="form-section">
+      <h2>基本情報</h2>
+      <div class="form-group">
+        <label>会社名<span class="required">*</span></label>
+        <input type="text" name="company_name" required
+               value="{{ company.company_name if company else '' }}"
+               placeholder="例：株式会社サンプル">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>業種</label>
+          <input type="text" name="industry"
+                 value="{{ company.industry if company else '' }}"
+                 placeholder="例：製造業、IT・SIer">
+        </div>
+        <div class="form-group">
+          <label>従業員数</label>
+          <input type="text" name="employees"
+                 value="{{ company.employees if company else '' }}"
+                 placeholder="例：500名">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>売上規模（概算）</label>
+          <input type="text" name="revenue"
+                 value="{{ company.revenue if company else '' }}"
+                 placeholder="例：200億円">
+        </div>
+        <div class="form-group">
+          <label>担当営業名</label>
+          <input type="text" name="sales_person"
+                 value="{{ company.sales_person if company else '' }}"
+                 placeholder="例：田中 一郎">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>会社HP URL</label>
+        <input type="url" name="hp_url"
+               value="{{ company.hp_url if company else '' }}"
+               placeholder="https://example.com">
+      </div>
+    </div>
+
+    <!-- 会社概要・方針 -->
+    <div class="form-section">
+      <h2>APS調査項目</h2>
+      <div class="form-group">
+        <label>会社概要・事業内容</label>
+        <textarea name="overview" rows="4"
+                  placeholder="HPや決算説明資料をもとに、主要事業・売上構成・強みなどを記載">{{ company.overview if company else '' }}</textarea>
+      </div>
+      <div class="form-group">
+        <label>中期経営計画・会社の方針</label>
+        <textarea name="mid_term_plan" rows="4"
+                  placeholder="IR資料や中計から読み取った方針・注力領域・KPIなど">{{ company.mid_term_plan if company else '' }}</textarea>
+      </div>
+    </div>
+
+    <!-- キーパーソン -->
+    <div class="form-section">
+      <h2>キーパーソン一覧</h2>
+      <table class="dynamic-table" id="persons-table">
+        <thead>
+          <tr>
+            <th style="width:22%">名前</th>
+            <th style="width:20%">役職</th>
+            <th style="width:18%">意思決定権</th>
+            <th>備考</th>
+            <th style="width:36px"></th>
+          </tr>
+        </thead>
+        <tbody id="persons-body">
+          {% if company and company.key_persons %}
+            {% for p in company.key_persons %}
+            <tr>
+              <td><input type="text" name="person_name[]" value="{{ p.name }}" placeholder="山田 太郎"></td>
+              <td><input type="text" name="person_title[]" value="{{ p.title }}" placeholder="情報システム部長"></td>
+              <td>
+                <select name="person_decision[]">
+                  <option value="あり" {% if p.decision == 'あり' %}selected{% endif %}>あり</option>
+                  <option value="なし" {% if p.decision == 'なし' %}selected{% endif %}>なし</option>
+                  <option value="不明" {% if p.decision == '不明' %}selected{% endif %}>不明</option>
+                </select>
+              </td>
+              <td><input type="text" name="person_note[]" value="{{ p.note }}" placeholder="窓口担当、エンジニア出身"></td>
+              <td><button type="button" class="remove-row-btn" onclick="removeRow(this)">×</button></td>
+            </tr>
+            {% endfor %}
+          {% else %}
+          <tr>
+            <td><input type="text" name="person_name[]" placeholder="山田 太郎"></td>
+            <td><input type="text" name="person_title[]" placeholder="情報システム部長"></td>
+            <td>
+              <select name="person_decision[]">
+                <option value="あり">あり</option>
+                <option value="なし">なし</option>
+                <option value="不明" selected>不明</option>
+              </select>
+            </td>
+            <td><input type="text" name="person_note[]" placeholder="窓口担当、エンジニア出身"></td>
+            <td><button type="button" class="remove-row-btn" onclick="removeRow(this)">×</button></td>
+          </tr>
+          {% endif %}
+        </tbody>
+      </table>
+      <button type="button" class="add-row-btn" onclick="addPersonRow()">＋ キーパーソンを追加</button>
+    </div>
+
+    <!-- システム一覧 -->
+    <div class="form-section">
+      <h2>現在使っているシステム一覧</h2>
+      <table class="dynamic-table" id="systems-table">
+        <thead>
+          <tr>
+            <th style="width:25%">システム名</th>
+            <th style="width:16%">自社/他社</th>
+            <th style="width:20%">導入時期</th>
+            <th style="width:22%">リプレース見込み</th>
+            <th style="width:36px"></th>
+          </tr>
+        </thead>
+        <tbody id="systems-body">
+          {% if company and company.systems %}
+            {% for s in company.systems %}
+            <tr>
+              <td><input type="text" name="system_name[]" value="{{ s.name }}" placeholder="基幹システム"></td>
+              <td>
+                <select name="system_type[]">
+                  <option value="他社" {% if s.type == '他社' %}selected{% endif %}>他社</option>
+                  <option value="自社" {% if s.type == '自社' %}selected{% endif %}>自社</option>
+                  <option value="不明" {% if s.type == '不明' %}selected{% endif %}>不明</option>
+                </select>
+              </td>
+              <td><input type="text" name="system_installed[]" value="{{ s.installed }}" placeholder="2019年頃"></td>
+              <td><input type="text" name="system_replace[]" value="{{ s.replace }}" placeholder="2026年度中"></td>
+              <td><button type="button" class="remove-row-btn" onclick="removeRow(this)">×</button></td>
+            </tr>
+            {% endfor %}
+          {% else %}
+          <tr>
+            <td><input type="text" name="system_name[]" placeholder="基幹システム"></td>
+            <td>
+              <select name="system_type[]">
+                <option value="他社">他社</option>
+                <option value="自社">自社</option>
+                <option value="不明" selected>不明</option>
+              </select>
+            </td>
+            <td><input type="text" name="system_installed[]" placeholder="2019年頃"></td>
+            <td><input type="text" name="system_replace[]" placeholder="2026年度中"></td>
+            <td><button type="button" class="remove-row-btn" onclick="removeRow(this)">×</button></td>
+          </tr>
+          {% endif %}
+        </tbody>
+      </table>
+      <button type="button" class="add-row-btn" onclick="addSystemRow()">＋ システムを追加</button>
+    </div>
+
+    <!-- 営業分析情報 -->
+    <div class="form-section">
+      <h2>営業分析情報</h2>
+      <div class="form-group">
+        <label>競合状況</label>
+        <textarea name="competitors" rows="3"
+                  placeholder="現在競合している会社・製品、強み・弱み">{{ company.competitors if company else '' }}</textarea>
+      </div>
+      <div class="form-group">
+        <label>顧客の顧客（エンドユーザー）の課題</label>
+        <textarea name="end_user_issues" rows="3"
+                  placeholder="顧客が対応している先のエンドユーザーが抱えている課題">{{ company.end_user_issues if company else '' }}</textarea>
+      </div>
+      <div class="form-group">
+        <label>潜在ニーズ・本音（ヒアリングメモ）</label>
+        <textarea name="latent_needs" rows="3"
+                  placeholder="商談・ヒアリングで感じた本音・ニーズ・悩み">{{ company.latent_needs if company else '' }}</textarea>
+      </div>
+      <div class="form-group">
+        <label>ビッグプレー候補</label>
+        <textarea name="big_play" rows="3"
+                  placeholder="3〜5年後を見据えた大型提案の仮説（1億〜規模）">{{ company.big_play if company else '' }}</textarea>
+      </div>
+      <div class="form-group">
+        <label>現在の案件・パイプライン状況</label>
+        <textarea name="pipeline" rows="3"
+                  placeholder="進行中の案件・金額・確度・クローズ予定など">{{ company.pipeline if company else '' }}</textarea>
+      </div>
+    </div>
+
+    <div class="form-footer">
+      <a href="{{ '/company/' + company.id|string + '/advisor' if company else '/' }}" class="btn-cancel">キャンセル</a>
+      <button type="submit" class="btn-submit">
+        {% if mode == 'new' %}保存してAIアドバイスへ{% else %}更新してAIアドバイスへ{% endif %}
+      </button>
+    </div>
+  </form>
+</div>
+
+<script>
+function removeRow(btn) {
+  const row = btn.closest('tr');
+  const tbody = row.parentNode;
+  if (tbody.rows.length > 1) {
+    row.remove();
+  } else {
+    // 最後の1行は消さずにクリア
+    row.querySelectorAll('input').forEach(inp => inp.value = '');
+  }
+}
+
+function addPersonRow() {
+  const tbody = document.getElementById('persons-body');
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td><input type="text" name="person_name[]" placeholder="山田 太郎"></td>
+    <td><input type="text" name="person_title[]" placeholder="情報システム部長"></td>
+    <td>
+      <select name="person_decision[]">
+        <option value="あり">あり</option>
+        <option value="なし">なし</option>
+        <option value="不明" selected>不明</option>
+      </select>
+    </td>
+    <td><input type="text" name="person_note[]" placeholder="窓口担当、エンジニア出身"></td>
+    <td><button type="button" class="remove-row-btn" onclick="removeRow(this)">×</button></td>
+  `;
+  tbody.appendChild(tr);
+  tr.querySelector('input').focus();
+}
+
+function addSystemRow() {
+  const tbody = document.getElementById('systems-body');
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td><input type="text" name="system_name[]" placeholder="基幹システム"></td>
+    <td>
+      <select name="system_type[]">
+        <option value="他社">他社</option>
+        <option value="自社">自社</option>
+        <option value="不明" selected>不明</option>
+      </select>
+    </td>
+    <td><input type="text" name="system_installed[]" placeholder="2019年頃"></td>
+    <td><input type="text" name="system_replace[]" placeholder="2026年度中"></td>
+    <td><button type="button" class="remove-row-btn" onclick="removeRow(this)">×</button></td>
+  `;
+  tbody.appendChild(tr);
+  tr.querySelector('input').focus();
+}
+</script>
+{% endblock %}

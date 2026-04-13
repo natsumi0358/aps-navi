@@ -1,0 +1,444 @@
+{% extends "base.html" %}
+
+{% block title %}{{ company.company_name }}｜AIアドバイス｜アカマネ{% endblock %}
+
+{% block extra_style %}
+<style>
+  body { display: flex; flex-direction: column; }
+
+  .company-banner {
+    background: #1a1a2e;
+    color: white;
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-top: 1px solid #2d2d5e;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .company-banner .company-name {
+    font-size: 15px;
+    font-weight: 700;
+  }
+
+  .company-banner .company-meta {
+    font-size: 12px;
+    color: #aaa;
+    margin-top: 2px;
+  }
+
+  .banner-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .banner-btn {
+    font-size: 12px;
+    padding: 6px 12px;
+    border-radius: 6px;
+    text-decoration: none;
+    border: 1px solid #555;
+    color: #ccc;
+    background: none;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  .banner-btn:hover { border-color: #fff; color: #fff; }
+
+  #chat-container {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px 16px;
+    max-width: 860px;
+    width: 100%;
+    margin: 0 auto;
+  }
+
+  .message {
+    margin-bottom: 16px;
+    display: flex;
+    gap: 10px;
+    animation: fadeIn 0.3s ease;
+  }
+
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+  .message.user { flex-direction: row-reverse; }
+
+  .avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+
+  .message.user .avatar { background: #e8f0fe; }
+  .message.assistant .avatar { background: #1a1a2e; }
+
+  .bubble {
+    max-width: 78%;
+    padding: 12px 16px;
+    border-radius: 12px;
+    font-size: 14px;
+    line-height: 1.7;
+    word-break: break-word;
+  }
+
+  .bubble h1, .bubble h2, .bubble h3 {
+    font-size: 15px;
+    font-weight: 700;
+    margin: 12px 0 6px;
+  }
+
+  .bubble p { margin: 6px 0; }
+  .bubble ul, .bubble ol { padding-left: 20px; margin: 6px 0; }
+  .bubble li { margin: 4px 0; }
+  .bubble strong { font-weight: 700; }
+  .bubble hr { border: none; border-top: 1px solid #eee; margin: 10px 0; }
+  .bubble code { background: #f0f0f0; padding: 2px 5px; border-radius: 4px; font-size: 13px; }
+
+  .message.user .bubble {
+    background: #1a1a2e;
+    color: white;
+    border-bottom-right-radius: 4px;
+  }
+
+  .message.assistant .bubble {
+    background: white;
+    border-bottom-left-radius: 4px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+  }
+
+  .typing-indicator { display: flex; gap: 4px; padding: 14px 16px; }
+
+  .dot {
+    width: 8px; height: 8px;
+    background: #999;
+    border-radius: 50%;
+    animation: bounce 1.2s infinite;
+  }
+
+  .dot:nth-child(2) { animation-delay: 0.2s; }
+  .dot:nth-child(3) { animation-delay: 0.4s; }
+
+  @keyframes bounce {
+    0%, 60%, 100% { transform: translateY(0); }
+    30% { transform: translateY(-8px); }
+  }
+
+  #input-area {
+    background: white;
+    border-top: 1px solid #ddd;
+    padding: 12px 16px;
+    position: sticky;
+    bottom: 0;
+  }
+
+  #input-inner {
+    max-width: 860px;
+    margin: 0 auto;
+    display: flex;
+    gap: 10px;
+    align-items: flex-end;
+  }
+
+  #user-input {
+    flex: 1;
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    padding: 10px 14px;
+    font-size: 14px;
+    font-family: inherit;
+    resize: none;
+    min-height: 44px;
+    max-height: 160px;
+    outline: none;
+    line-height: 1.5;
+  }
+
+  #user-input:focus { border-color: #1a1a2e; }
+
+  #send-btn {
+    background: #1a1a2e;
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 10px 18px;
+    font-size: 14px;
+    cursor: pointer;
+    white-space: nowrap;
+    height: 44px;
+  }
+
+  #send-btn:hover { background: #2d2d5e; }
+  #send-btn:disabled { background: #999; cursor: not-allowed; }
+
+  .welcome-advisor {
+    text-align: center;
+    padding: 40px 20px;
+    color: #888;
+  }
+
+  .welcome-advisor h2 {
+    font-size: 18px;
+    color: #1a1a2e;
+    margin-bottom: 10px;
+  }
+
+  .welcome-advisor p {
+    font-size: 14px;
+    line-height: 1.7;
+    margin-bottom: 20px;
+  }
+
+  .analyze-btn {
+    background: #e94560;
+    color: white;
+    border: none;
+    padding: 14px 32px;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .analyze-btn:hover { background: #c73652; }
+  .analyze-btn:disabled { background: #aaa; cursor: not-allowed; }
+
+  .quick-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    margin-top: 20px;
+  }
+
+  .chip {
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 20px;
+    padding: 7px 14px;
+    font-size: 13px;
+    cursor: pointer;
+    color: #333;
+  }
+
+  .chip:hover { border-color: #1a1a2e; color: #1a1a2e; }
+
+  @media (max-width: 600px) {
+    .bubble { max-width: 88%; }
+    .company-banner { flex-direction: column; align-items: flex-start; }
+  }
+</style>
+{% endblock %}
+
+{% block header_action %}
+<a href="/" class="btn btn-secondary">← 一覧</a>
+{% endblock %}
+
+{% block content %}
+<!-- 会社バナー -->
+<div class="company-banner">
+  <div>
+    <div class="company-name">{{ company.company_name }}</div>
+    <div class="company-meta">
+      {% if company.industry %}{{ company.industry }}{% endif %}
+      {% if company.employees %} ／ {{ company.employees }}{% endif %}
+      {% if company.sales_person %} ／ 担当：{{ company.sales_person }}{% endif %}
+    </div>
+  </div>
+  <div class="banner-actions">
+    <a href="/company/{{ company.id }}/edit" class="banner-btn">情報を編集</a>
+  </div>
+</div>
+
+<!-- チャット -->
+<div id="chat-container">
+  <div class="welcome-advisor" id="welcome-msg">
+    <h2>AIアドバイスを開始</h2>
+    <p>入力した{{ company.company_name }}の情報をもとに<br>APS観点でアドバイスをもらいましょう。</p>
+    <button class="analyze-btn" id="analyze-btn" onclick="startAnalysis()">
+      🧠 AIにアドバイスをもらう
+    </button>
+    <div class="quick-chips">
+      <span class="chip" onclick="sendChip(this)">ビッグプレーを具体的に教えてほしい</span>
+      <span class="chip" onclick="sendChip(this)">潜在ニーズをもっと掘り下げて</span>
+      <span class="chip" onclick="sendChip(this)">パイプラインの充実方法を教えてほしい</span>
+      <span class="chip" onclick="sendChip(this)">初回商談で何を確認すべきか教えてほしい</span>
+      <span class="chip" onclick="sendChip(this)">競合対策のアドバイスをしてほしい</span>
+    </div>
+  </div>
+</div>
+
+<!-- 入力エリア -->
+<div id="input-area">
+  <div id="input-inner">
+    <textarea id="user-input" placeholder="追加質問を入力してください..." rows="1"
+      onkeydown="handleKeydown(event)" oninput="autoResize(this)"></textarea>
+    <button id="send-btn" onclick="sendMessage()" disabled>送信</button>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script>
+  const companyId = {{ company.id }};
+  const chatContainer = document.getElementById('chat-container');
+  const userInput = document.getElementById('user-input');
+  const sendBtn = document.getElementById('send-btn');
+  let isLoading = false;
+  let analysisStarted = false;
+
+  function autoResize(el) {
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 160) + 'px';
+  }
+
+  function handleKeydown(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      if (!sendBtn.disabled) sendMessage();
+    }
+  }
+
+  function escapeHtml(text) {
+    return text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function addMessage(role, text) {
+    const welcome = document.getElementById('welcome-msg');
+    if (welcome) welcome.remove();
+
+    if (!analysisStarted) {
+      analysisStarted = true;
+      sendBtn.disabled = false;
+    }
+
+    const div = document.createElement('div');
+    div.className = `message ${role}`;
+    const avatarText = role === 'user' ? '👤' : '🧠';
+    const content = role === 'assistant'
+      ? marked.parse(text)
+      : escapeHtml(text);
+    div.innerHTML = `
+      <div class="avatar">${avatarText}</div>
+      <div class="bubble">${content}</div>
+    `;
+    chatContainer.appendChild(div);
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+  }
+
+  function showTyping() {
+    const div = document.createElement('div');
+    div.className = 'message assistant';
+    div.id = 'typing';
+    div.innerHTML = `
+      <div class="avatar">🧠</div>
+      <div class="bubble">
+        <div class="typing-indicator">
+          <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+        </div>
+      </div>
+    `;
+    chatContainer.appendChild(div);
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+  }
+
+  function removeTyping() {
+    const typing = document.getElementById('typing');
+    if (typing) typing.remove();
+  }
+
+  async function startAnalysis() {
+    if (isLoading) return;
+    const analyzeBtn = document.getElementById('analyze-btn');
+    if (analyzeBtn) analyzeBtn.disabled = true;
+    isLoading = true;
+
+    const welcome = document.getElementById('welcome-msg');
+    if (welcome) welcome.remove();
+    showTyping();
+
+    try {
+      const res = await fetch(`/company/${companyId}/analyze`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      const data = await res.json();
+      removeTyping();
+      if (data.error) {
+        addMessage('assistant', `エラー: ${data.error}`);
+      } else {
+        addMessage('assistant', data.reply);
+      }
+    } catch (err) {
+      removeTyping();
+      addMessage('assistant', 'ネットワークエラーが発生しました。しばらくしてから再度お試しください。');
+    } finally {
+      isLoading = false;
+      sendBtn.disabled = false;
+      userInput.focus();
+    }
+  }
+
+  async function sendMessage() {
+    const text = userInput.value.trim();
+    if (!text || isLoading) return;
+
+    isLoading = true;
+    sendBtn.disabled = true;
+    userInput.value = '';
+    userInput.style.height = 'auto';
+
+    addMessage('user', text);
+    showTyping();
+
+    try {
+      const res = await fetch(`/company/${companyId}/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: text }),
+      });
+      const data = await res.json();
+      removeTyping();
+      if (data.error) {
+        addMessage('assistant', `エラー: ${data.error}`);
+      } else {
+        addMessage('assistant', data.reply);
+      }
+    } catch (err) {
+      removeTyping();
+      addMessage('assistant', 'ネットワークエラーが発生しました。しばらくしてから再度お試しください。');
+    } finally {
+      isLoading = false;
+      sendBtn.disabled = false;
+      userInput.focus();
+    }
+  }
+
+  function sendChip(el) {
+    if (!analysisStarted) {
+      startAnalysis().then(() => {
+        userInput.value = el.textContent;
+      });
+    } else {
+      userInput.value = el.textContent;
+      sendMessage();
+    }
+  }
+</script>
+{% endblock %}
