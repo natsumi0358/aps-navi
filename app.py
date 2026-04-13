@@ -6,7 +6,10 @@ from pathlib import Path
 from database import init_db, get_all_companies, get_company, create_company, update_company, delete_company
 
 app = Flask(__name__)
-app.secret_key = os.environ.get("FLASK_SECRET_KEY", "nknarts-akamane-secret")
+app.secret_key = os.environ.get("FLASK_SECRET_KEY", "nknarts-aps-navi-secret")
+
+# DB初期化（gunicorn起動時にも必ず実行）
+init_db()
 
 # システムプロンプトを読み込む（①と同じ）
 SYSTEM_PROMPT_PATH = Path(__file__).parent.parent / "aps-advisor-ai" / "knowledge" / "system_prompt.md"
@@ -238,6 +241,5 @@ def _parse_form(form):
 
 
 if __name__ == "__main__":
-    init_db()
     port = int(os.environ.get("PORT", 5002))
     app.run(debug=False, host="0.0.0.0", port=port)
