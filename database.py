@@ -24,12 +24,20 @@ def init_db():
             revenue TEXT,
             hp_url TEXT,
             sales_person TEXT,
-            -- 会社概要詳細（AI自動取得）
+            -- Work6: お客様概要（AI自動取得）
+            founded TEXT,
+            established TEXT,
+            headquarters TEXT,
+            capital TEXT,
+            operating_profit TEXT,
+            branches TEXT,
+            group_companies TEXT,
             company_detail TEXT,
             overview TEXT,
-            mid_term_plan TEXT,
-            mvv TEXT,
             president_profile TEXT,
+            mvv TEXT,
+            -- Work7: 経営方針（AI自動取得）
+            mid_term_plan TEXT,
             ir_info TEXT,
             investment_areas TEXT,
             -- 業界分析（AI自動生成）
@@ -46,12 +54,19 @@ def init_db():
             latent_needs TEXT,
             big_play TEXT,
             pipeline TEXT,
-            -- APSアカウントプラン（手入力）
+            -- Work8: これまでの活動（手入力）
             activity_history TEXT,
+            -- Work9: 中長期売上プラン（手入力）
             mid_long_term_plan TEXT,
+            -- Work10: 組織図（手入力）
             org_chart TEXT,
+            -- Work11: 今年のForecast（手入力）
             forecast TEXT,
+            -- Work12: 主要案件（手入力）
             key_cases TEXT,
+            -- Work13: カバレッジマップ（手入力）
+            coverage_map TEXT,
+            -- アクションプラン・リクエスト（手入力）
             action_plan TEXT,
             company_requests TEXT,
             -- メタ
@@ -62,9 +77,18 @@ def init_db():
     # 既存テーブルへのカラム追加（マイグレーション）
     existing = [row[1] for row in conn.execute("PRAGMA table_info(companies)").fetchall()]
     new_columns = [
+        ("founded", "TEXT"),
+        ("established", "TEXT"),
+        ("headquarters", "TEXT"),
+        ("capital", "TEXT"),
+        ("operating_profit", "TEXT"),
+        ("branches", "TEXT"),
+        ("group_companies", "TEXT"),
         ("company_detail", "TEXT"),
-        ("mvv", "TEXT"),
+        ("overview", "TEXT"),
         ("president_profile", "TEXT"),
+        ("mvv", "TEXT"),
+        ("mid_term_plan", "TEXT"),
         ("ir_info", "TEXT"),
         ("investment_areas", "TEXT"),
         ("pest", "TEXT"),
@@ -77,6 +101,7 @@ def init_db():
         ("org_chart", "TEXT"),
         ("forecast", "TEXT"),
         ("key_cases", "TEXT"),
+        ("coverage_map", "TEXT"),
         ("action_plan", "TEXT"),
         ("company_requests", "TEXT"),
     ]
@@ -116,15 +141,16 @@ def create_company(data):
     cur = conn.execute("""
         INSERT INTO companies (
             company_name, industry, employees, revenue, hp_url, sales_person,
-            company_detail, overview, mid_term_plan, mvv, president_profile,
-            ir_info, investment_areas,
+            founded, established, headquarters, capital, operating_profit,
+            branches, group_companies, company_detail, overview, president_profile, mvv,
+            mid_term_plan, ir_info, investment_areas,
             pest, five_forces, swot, cross_swot, positioning,
             systems, key_persons,
             competitors, end_user_issues, latent_needs, big_play, pipeline,
             activity_history, mid_long_term_plan, org_chart, forecast,
-            key_cases, action_plan, company_requests,
+            key_cases, coverage_map, action_plan, company_requests,
             created_at, updated_at
-        ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+        ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
     """, (
         data.get("company_name", ""),
         data.get("industry", ""),
@@ -132,11 +158,18 @@ def create_company(data):
         data.get("revenue", ""),
         data.get("hp_url", ""),
         data.get("sales_person", ""),
+        data.get("founded", ""),
+        data.get("established", ""),
+        data.get("headquarters", ""),
+        data.get("capital", ""),
+        data.get("operating_profit", ""),
+        data.get("branches", ""),
+        data.get("group_companies", ""),
         data.get("company_detail", ""),
         data.get("overview", ""),
-        data.get("mid_term_plan", ""),
-        data.get("mvv", ""),
         data.get("president_profile", ""),
+        data.get("mvv", ""),
+        data.get("mid_term_plan", ""),
         data.get("ir_info", ""),
         data.get("investment_areas", ""),
         data.get("pest", ""),
@@ -156,6 +189,7 @@ def create_company(data):
         data.get("org_chart", ""),
         data.get("forecast", ""),
         data.get("key_cases", ""),
+        data.get("coverage_map", ""),
         data.get("action_plan", ""),
         data.get("company_requests", ""),
         now, now
@@ -172,13 +206,14 @@ def update_company(company_id, data):
     conn.execute("""
         UPDATE companies SET
             company_name=?, industry=?, employees=?, revenue=?, hp_url=?, sales_person=?,
-            company_detail=?, overview=?, mid_term_plan=?, mvv=?, president_profile=?,
-            ir_info=?, investment_areas=?,
+            founded=?, established=?, headquarters=?, capital=?, operating_profit=?,
+            branches=?, group_companies=?, company_detail=?, overview=?, president_profile=?, mvv=?,
+            mid_term_plan=?, ir_info=?, investment_areas=?,
             pest=?, five_forces=?, swot=?, cross_swot=?, positioning=?,
             systems=?, key_persons=?,
             competitors=?, end_user_issues=?, latent_needs=?, big_play=?, pipeline=?,
             activity_history=?, mid_long_term_plan=?, org_chart=?, forecast=?,
-            key_cases=?, action_plan=?, company_requests=?,
+            key_cases=?, coverage_map=?, action_plan=?, company_requests=?,
             updated_at=?
         WHERE id=?
     """, (
@@ -188,11 +223,18 @@ def update_company(company_id, data):
         data.get("revenue", ""),
         data.get("hp_url", ""),
         data.get("sales_person", ""),
+        data.get("founded", ""),
+        data.get("established", ""),
+        data.get("headquarters", ""),
+        data.get("capital", ""),
+        data.get("operating_profit", ""),
+        data.get("branches", ""),
+        data.get("group_companies", ""),
         data.get("company_detail", ""),
         data.get("overview", ""),
-        data.get("mid_term_plan", ""),
-        data.get("mvv", ""),
         data.get("president_profile", ""),
+        data.get("mvv", ""),
+        data.get("mid_term_plan", ""),
         data.get("ir_info", ""),
         data.get("investment_areas", ""),
         data.get("pest", ""),
@@ -212,6 +254,7 @@ def update_company(company_id, data):
         data.get("org_chart", ""),
         data.get("forecast", ""),
         data.get("key_cases", ""),
+        data.get("coverage_map", ""),
         data.get("action_plan", ""),
         data.get("company_requests", ""),
         now,
